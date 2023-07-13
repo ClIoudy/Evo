@@ -1,5 +1,5 @@
 use crow::{Context, Texture, DrawConfig};
-use crate::game::FOOD_VAL;
+use crate::update::FOOD_VAL;
 use rand::{thread_rng, Rng};
 
 #[derive(Clone)]
@@ -12,7 +12,7 @@ pub struct Food {
 
 impl Food {
 
-    pub fn new(pos:(i32, i32), mut ctx: &mut Context) -> Food{
+    pub fn new(pos:(i32, i32), ctx: &mut Context) -> Food{
         let mut rng = thread_rng();
         let texture = Texture::load(ctx, "./textures/Food.png").unwrap();
         Food{ 

@@ -1,8 +1,8 @@
-//!!!!!! if "cannot find path specified" error occurs, just reopen Food.rs in "setup" and it'll work again
+//!!!!!! directory to execute should be setup
 
 
 #![windows_subsystem = "console"]
-mod game;
+mod update;
 mod setup;
 mod templates;
 
@@ -14,10 +14,10 @@ use crow::{
     },
     Context
 };
-use game::START_FOODS;
+use update::START_FOODS;
 use rand::{thread_rng, Rng};
 
-use crate::setup::{Food::Food, Entity::Entity};
+use crate::setup::{food::Food, entity::Entity};
 
 fn main() -> Result<(), crow::Error> {
     
@@ -93,7 +93,8 @@ fn main() -> Result<(), crow::Error> {
                     game.foods = vec![];
                     for _i in 0..game.entities.len() {   
                         // println!("delted entity ({})", game.entities[0].all_index);
-                        game.entities[0].clone().drop(0, &mut game)
+                        // game.entities[0].clone().drop(0, &mut game)
+                        game.kill(0);
                     }
                 }
                 _ => (),
@@ -101,7 +102,7 @@ fn main() -> Result<(), crow::Error> {
 
             Event::MainEventsCleared => ctx.window().request_redraw(),
             Event::RedrawRequested(_) => {
-                game::update(&mut ctx, &mut game);
+                update::update(&mut ctx, &mut game);
             }
             _ => (),
         },

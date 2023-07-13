@@ -2,23 +2,24 @@ use ndarray::Array2;
 use std::time::SystemTime;
 use rand::prelude::*;
 
+use crate::update::STEP_SIZE;
 
-pub mod Entity;
-pub mod Food;
+pub mod entity;
+pub mod food;
 
 
 
 pub struct Game {
     pub x: i32,
     pub mouse_position: (i32, i32),
-    pub entities: Vec<Entity::Entity>,
-    pub foods: Vec<Food::Food>,    
+    pub entities: Vec<entity::Entity>,
+    pub foods: Vec<food::Food>,    
     pub delta_time: f32,
     pub last_time: SystemTime,
     pub food_counter: SystemTime,
     pub last_food: u64,
     pub best_entity: usize,
-    pub all_entities_created: Vec<Entity::Entity>,
+    pub all_entities_created: Vec<entity::Entity>,
 }
 
 impl Game {
@@ -45,6 +46,40 @@ impl Game {
         }
         self.last_time = SystemTime::now();
     }
+
+
+    pub fn kill(&mut self, i: usize) {
+        let entity = &self.entities[i];
+        self.all_entities_created[entity.all_index] = entity.clone();
+
+        println!("delted entity ({})", entity.all_index);
+        
+        if entity.surival_time > self.all_entities_created[self.best_entity].surival_time {
+            self.best_entity = entity.all_index;
+            println!("best entity died! - survival time: {}", entity.surival_time);
+        }
+        self.entities.swap_remove(i);
+    }
+
+
+
+
+
+    pub fn offspring_of(&mut self, entity: &entity::Entity) {
+
+        let mut e = entity.clone();
+
+        e.pos = (entity.pos.0 - 150, entity.pos.1 - 150);
+        e.rotation = entity.rotation - 70.0;
+        for i in 0.. e.weights.len() {
+            e.weights[i] = adjust_weights::<f32>(entity.weights[i].clone(), STEP_SIZE);
+        }
+        self.entities.push(e);
+    }
+    
+
+
+
 
 
 

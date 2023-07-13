@@ -6,7 +6,7 @@ use crate::Food;
 use rand::prelude::*;
 use std::f32::consts::PI;
 
-use crate::game::{ENTITY_START_HUNGER, HIDDEN_NODES};
+use crate::update::{ENTITY_START_HUNGER, HIDDEN_NODES};
 
 #[derive(Clone)]
 pub struct Entity {
@@ -50,7 +50,6 @@ impl Entity {
             _a.push(HIDDEN_NODES[i]);
         }
         _a.push(2);
-        // let layers = [vision_arcs * 3] + HIDDEN_NODES + [2];
         let layers = Array1::from_vec(_a);
 
         for i in 1..layers.len() {
@@ -85,14 +84,8 @@ impl Entity {
 
     pub fn new_from_template(max_speed: f32, max_rotation_speed: f32, vision_range: f32, vision_angle: f32, vision_arcs: i32, weights: Vec<Array2<f32>>, ctx: &mut Context, game: &mut Game) {
         let mut rng = thread_rng();
-        let mut _a = vec![];
-        _a.push(vision_arcs * 3);
-        for i in 0..HIDDEN_NODES.len() {
-            _a.push(HIDDEN_NODES[i]);
-        }
-        _a.push(2);
-        let layers = Array1::from_vec(_a);
-        let pos = (rng.gen_range(300..700), rng.gen_range(200..300));
+        
+        let pos = (rng.gen_range(300..1000), rng.gen_range(300..700));
         let e = Entity {
             pos,
             f32pos: (pos.0 as f32, pos.1 as f32),
@@ -114,17 +107,7 @@ impl Entity {
     }
 
 
-    pub fn drop(self, i: usize, game: &mut Game) {
-        game.all_entities_created[self.all_index] = self.clone();
-        game.entities.swap_remove(i);
 
-        println!("delted entity ({})", self.all_index);
-        
-        if self.surival_time > game.all_entities_created[game.best_entity].surival_time {
-            game.best_entity = self.all_index;
-            println!("best entity died! - survival time: {}", self.surival_time);
-        }
-    }
 
 
     pub fn walk(&mut self, mut speed: f32, delta_time: f32, rotation: f32) {
@@ -145,7 +128,7 @@ impl Entity {
 
     
 
-    pub fn see(&self, entities: &Vec<Entity>, foods: Vec<Food>, angle_offset: f32) -> (f32, f32, f32) 
+    pub fn see(&self, entities: &Vec<Entity>, foods: &Vec<Food>, angle_offset: f32) -> (f32, f32, f32) 
     {
 
         let mut dist = self.vision_range;
@@ -209,6 +192,34 @@ impl Entity {
                 ..DrawConfig::default()
             }
         );
+    }
+
+
+    pub fn nn_logic(&mut self, entities: Vec<Entity>, foods: &Vec<Food>, delta_time: f32) {
+
+        // inptuts: entiy.see()
+        let mut inputs = Array1::<f32>::default((self.vision_arcs * 3) as usize);
+
+        for j in 0..self.vision_arcs as usize {
+            let k = j as f32 - (self.vision_arcs as f32-1.0)/2.0;
+            let sees = self.see(&entities, &foods, k * self.vision_angle * 1.5);
+            inputs[j*3 + 0] = sees.0;
+            inputs[j*3 + 1] = sees.1;
+            inputs[j*3 + 2] = sees.2;
+        }
+
+        let mut a = inputs;
+        for j in 0..self.weights.len() {
+            a = self.weights[j].dot(&a);
+        }
+        
+        
+        // output: speed and rotation, clamped 
+        let speed = f32::max(f32::min(a[0], self.max_speed), 0.0);
+        let rotation = f32::max(f32::min(a[1], self.max_rotation_speed), -self.max_rotation_speed);
+        
+        self.walk(speed, delta_time, rotation);
+
     }
 
 
