@@ -50,10 +50,10 @@ impl Entity {
             _a.push(HIDDEN_NODES[i]);
         }
         _a.push(2);
-        let layers = Array1::from_vec(_a);
+        // let layers = Array1::from_vec(_a);
 
-        for i in 1..layers.len() {
-            weights.push(rand_matrix::<f32>(layers[i-1] as usize, layers[i] as usize));
+        for i in 1.._a.len() {
+            weights.push(rand_matrix::<f32>(&(_a[i-1] as usize), &(_a[i] as usize)));
         }
 
 
@@ -85,7 +85,7 @@ impl Entity {
     pub fn new_from_template(max_speed: f32, max_rotation_speed: f32, vision_range: f32, vision_angle: f32, vision_arcs: i32, weights: Vec<Array2<f32>>, ctx: &mut Context, game: &mut Game) {
         let mut rng = thread_rng();
         
-        let pos = (rng.gen_range(300..1000), rng.gen_range(300..700));
+        let pos = (rng.gen_range(0..ctx.window_width() as i32), rng.gen_range(0..ctx.window_height() as i32));
         let e = Entity {
             pos,
             f32pos: (pos.0 as f32, pos.1 as f32),
